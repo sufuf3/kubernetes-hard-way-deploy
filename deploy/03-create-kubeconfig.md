@@ -7,7 +7,7 @@
 而 kubeconfig 是 Kubernetes client 端和 API Server 認證的保證。  
 
 ## 建立 kubectl kubeconfig 文件
-> 以下動作先在 A 進行，之後再複製到 D, E (因為 A 才有 admin 的 key)
+> 以下動作先在 A 進行，之後再複製到 D, E
 
 ```sh
 $ export KUBE_APISERVER="https://10.142.0.2:6443"
@@ -61,3 +61,33 @@ kubectl config use-context default --kubeconfig=worknode2.kubeconfig
 - 將 worknode1.kubeconfig 複製到 D, worknode2.kubeconfig 複製到 E
 
 ## 建立 kube-proxy kubeconfig 文件
+> 以下動作先在 A 進行，之後再複製到 D, E
+
+```sh
+$ cd /etc/kubernetes/ssl
+
+# 設置 cluster 的參數
+kubectl config set-cluster kubernetes \
+  --certificate-authority=/etc/kubernetes/ssl/ca.pem \
+  --embed-certs=true \
+  --server=${KUBE_APISERVER} \
+  --kubeconfig=kube-proxy.kubeconfig
+
+# 設定 client 端的認證參數 
+kubectl config set-credentials kube-proxy \
+  --client-certificate=/etc/kubernetes/ssl/kube-proxy.pem \
+  --client-key=/etc/kubernetes/ssl/kube-proxy-key.pem \
+  --embed-certs=true \
+  --kubeconfig=kube-proxy.kubeconfig
+
+# 設置上下文參數
+kubectl config set-context default \
+  --cluster=kubernetes \
+  --user=kube-proxy \
+  --kubeconfig=kube-proxy.kubeconfig
+
+# 設置默認的上下文
+kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+```
+
+- 將 kube-proxy.kubeconfig 複製到 D, E
