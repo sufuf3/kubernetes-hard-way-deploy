@@ -1,6 +1,9 @@
 # 03. 建立 kubeconfig 文件
 
 ## Table of Contents
+- [前言](#%E5%89%8D%E8%A8%80)
+- [建立 kubectl kubeconfig 文件](#%E5%BB%BA%E7%AB%8B-kubectl-kubeconfig-%E6%96%87%E4%BB%B6)
+- [建立 kube-proxy kubeconfig 文件](#%E5%BB%BA%E7%AB%8B-kube-proxy-kubeconfig-%E6%96%87%E4%BB%B6)
 
 ## 前言
 在上一步已經建立好 kubelet 和 kube-proxy 的憑證和私鑰。  
