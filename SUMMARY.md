@@ -6,6 +6,7 @@
 
 * [01. Node 架構與準備](deploy/01-prerequisites.md)
 * [02. 建立 CA 與 Certificates](deploy/02-certificate-authority.md)
+* [03. 建立 kubeconfig 文件](deploy/03-create-kubeconfig.md)
 
 ## 核心原理
 
