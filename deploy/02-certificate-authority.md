@@ -1,9 +1,21 @@
 # 02. 建立 CA 與 Certificates
 
 ## Table of Contents
+- [0. 簡略概述](#0-%E7%B0%A1%E7%95%A5%E6%A6%82%E8%BF%B0)
+- [1. 安裝 CFSSL 工具](#1-%E5%AE%89%E8%A3%9D-cfssl-%E5%B7%A5%E5%85%B7)
+- [2. 建立 CA (Certificate Authority)](#2-%E5%BB%BA%E7%AB%8B-ca-certificate-authority)
+- [3. 建立 CA 憑證簽名請求](#3-%E5%BB%BA%E7%AB%8B-ca-%E6%86%91%E8%AD%89%E7%B0%BD%E5%90%8D%E8%AB%8B%E6%B1%82)
+- [4. 生成 CA 憑證私鑰](#4-%E7%94%9F%E6%88%90-ca-%E6%86%91%E8%AD%89%E7%A7%81%E9%91%B0)
+- [5. 建立 kubernetes API certificate](#5-%E5%BB%BA%E7%AB%8B-kubernetes-api-certificate)
+- [6. 建立 admin certificate](#6-%E5%BB%BA%E7%AB%8B-admin-certificate)
+- [7. 建立 kube-proxy certificate](#7-%E5%BB%BA%E7%AB%8B-kube-proxy-certificate)
+- [8. 建立 Kubelet client 憑證](#8-%E5%BB%BA%E7%AB%8B-kubelet-client-%E6%86%91%E8%AD%89)
+  * [給 Worknode 1](%E7%B5%A6-worknode-1)
+  * [給 Worknode 2](#%E7%B5%A6-worknode-2)
+- [複製檔案](#%E8%A4%87%E8%A3%BD%E6%AA%94%E6%A1%88)
 
 ## 0. 簡略概述
-> 以下 1~6 步只要在 A node 進行即可，把 key 完全生成後再複製到 B~E node 。  
+> 以下 1-8 步只要在 A node 進行即可，把 key 完全生成後再複製到 B~E node 。  
 
 - 生成的 CA 憑證和私鑰文件如下   
 ca-key.pem  
