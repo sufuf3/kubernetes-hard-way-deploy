@@ -48,6 +48,7 @@ Ref: https://github.com/cloudflare/cfssl#installation
 ```shell=
 $ sudo su -
 $ mkdir /root/ssl
+$ cd /root/ssl
 $ cfssl print-defaults config > config.json
 $ cfssl print-defaults csr > csr.json
 $ cat > ca-config.json <<EOF
@@ -84,7 +85,7 @@ Note:
 根據第二步驟的 cfssl 產生出來的 csr.json template 格式來建立 ca-csr.json 文件。  
 - 編輯 ca-csr.json 文件
 ```
-$ vim ca-csr.json
+$ vim /root/ssl/ca-csr.json
 ```
 - 編輯內容
 ```javascript
@@ -110,13 +111,64 @@ $ vim ca-csr.json
 > 在 A 建立
 
 ```sh
+$ cd /root/ssl
 $ cfssl gencert -initca ca-csr.json | cfssljson -bare ca
 ```
+
 生成 ca.pem, ca.csr, ca-key.pem(CA 私鑰,要保管好)  
 
 > **複製 `ca.pem, ca-key.pem` 到 A~C, 複製 `ca.pem` 到 D~E，都在 /etc/kubernetes/ssl/ 底下**
 
 ## 5. 建立 kubernetes API certificate
+> 在 A 建立
+
+保證 client 端和 Kubernetes API 的驗證  
+
+- 編輯 kubernetes-csr.json  
+```sh
+$ vim /root/ssl/kubernetes-csr.json
+```
+
+- 編輯內容  
+```javascript
+{
+    "CN": "kubernetes",
+    "hosts": [
+      "127.0.0.1",
+      "10.142.0.2",
+      "10.142.0.3",
+      "10.142.0.4",
+      "kubernetes",
+      "kubernetes.default",
+      "kubernetes.default.svc",
+      "kubernetes.default.svc.cluster",
+      "kubernetes.default.svc.cluster.local"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "TW",
+            "ST": "Hsinchu",
+            "L": "Hsinchu",
+            "O": "k8s",
+            "OU": "System"
+        }
+    ]
+}
+```
+
+- 生成 kubernetes證書和私鑰
+
+```sh
+$ /root/ssl
+$ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
+```
+
+產生 `kubernetes.csr, kubernetes-key.pem,  kubernetes.pem`
+> **複製 `kubernetes.pem, kubernetes-key.pem` 到 A~C
 
 ## 6. 建立 admin certificate
 
