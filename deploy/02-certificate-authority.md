@@ -246,9 +246,92 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kube
 
 生成 kube-proxy.csr, kube-proxy-key.pem, kube-proxy.pem
 
-> **Copy `kube-proxy.pem kube-proxy-key.pem` in A~E
+> **Copy `kube-proxy.pem kube-proxy-key.pem` in D~E
 
 ## 8. 建立 Kubelet client 憑證
-> 在 A 建立
+> 在 A 建立，完成後將 key 複製到 worker node
 
-## 
+使用 Node Authorizer 授權來自 Kubelet 的 API 請求。為了要通過 Node Authorizer 的授權, Kubelet 必須使用名稱 system:node:<nodeName> 的憑證來證明它屬於 system:nodes 用户组。  
+
+### 給 Worknode 1
+- 建立 worknode1-csr.json 文件
+```
+vim /root/ssl/worknode1-csr.json
+```
+- 編輯內容
+```sh
+{
+"CN": "system:node:worknode1",
+  "hosts": [],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "TW",
+      "ST": "Hsinchu",
+      "L": "Hsinchu",
+      "O": "system:nodes",
+      "OU": "System"
+    }
+  ]
+}
+```
+- 生成憑證和私鑰
+```
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=worknode1,10.142.0.5 -profile=kubernetes worknode1-csr.json | cfssljson -bare worknode1
+```
+> **Copy `worknode1.pem worknode1-key.pem` in D**
+
+### 給 Worknode 2
+- 建立 worknode2-csr.json 文件
+```
+vim /root/ssl/worknode2-csr.json
+```
+- 編輯內容
+```sh
+{
+"CN": "system:node:worknode1",
+  "hosts": [],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "TW",
+      "ST": "Hsinchu",
+      "L": "Hsinchu",
+      "O": "system:nodes",
+      "OU": "System"
+    }
+  ]
+}
+```
+- 生成憑證和私鑰
+```
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=worknode1,10.142.0.6 -profile=kubernetes worknode2-csr.json | cfssljson -bare worknode2
+```
+> **Copy `worknode2.pem worknode2-key.pem` in E**
+
+## 複製檔案
+- Master node  
+ca.pem  
+ca-key.pem  
+kubernetes-key.pem  
+kubernetes.pem  
+
+- Worker node 1  
+ca.pem  
+worknode1-key.pem  
+worknode1.pem  
+kube-proxy.pem  
+kube-proxy-key.pem  
+
+- Worker node 2  
+ca.pem  
+worknode2-key.pem  
+worknode2.pem  
+kube-proxy.pem  
+kube-proxy-key.pem  
