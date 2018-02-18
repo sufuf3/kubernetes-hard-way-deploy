@@ -11,11 +11,11 @@
 
 | ID | role | hostname | private IP | public IP |
 | --- | --- | --- | --- | --- |
-| A | master,etcd | master | 10.142.0.2 | XX.XXX.XX.XX |
-| B | master,etcd | node1 | 10.142.0.3 | XX.XXX.XX.XXX |
-| C | master,etcd | node2 | 10.142.0.4 | XX.XXX.XX.XXX |
-| D | worker | workernode1 | 10.142.0.5 | XX.XXX.XX.XXX |
-| E | worker | workernode2 | 10.142.0.6 | XX.XXX.XX.XX |
+| A | master,etcd | master | 10.140.0.2 | XX.XXX.XX.XX |
+| B | master,etcd | node1 | 10.140.0.3 | XX.XXX.XX.XXX |
+| C | master,etcd | node2 | 10.140.0.4 | XX.XXX.XX.XXX |
+| D | worker | workernode1 | 10.140.0.5 | XX.XXX.XX.XXX |
+| E | worker | workernode2 | 10.140.0.6 | XX.XXX.XX.XX |
 
 ## 安裝 Docker
 

@@ -147,9 +147,9 @@ $ vim /root/ssl/kubernetes-csr.json
     "CN": "kubernetes",
     "hosts": [
       "127.0.0.1",
-      "10.142.0.2",
-      "10.142.0.3",
-      "10.142.0.4",
+      "10.140.0.2",
+      "10.140.0.3",
+      "10.140.0.4",
       "kubernetes",
       "kubernetes.default",
       "kubernetes.default.svc",

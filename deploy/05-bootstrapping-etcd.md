@@ -60,12 +60,12 @@ ExecStart=/usr/bin/etcd \
   --peer-key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
   --trusted-ca-file=/etc/kubernetes/ssl/ca.pem \
   --peer-trusted-ca-file=/etc/kubernetes/ssl/ca.pem \
-  --initial-advertise-peer-urls https://10.142.0.2:2380 \
-  --listen-peer-urls https://10.142.0.2:2380 \
-  --listen-client-urls https://10.142.0.2:2379,http://127.0.0.1:2379 \
-  --advertise-client-urls https://10.142.0.2:2379 \
+  --initial-advertise-peer-urls https://10.140.0.2:2380 \
+  --listen-peer-urls https://10.140.0.2:2380 \
+  --listen-client-urls https://10.140.0.2:2379,http://127.0.0.1:2379 \
+  --advertise-client-urls https://10.140.0.2:2379 \
   --initial-cluster-token etcd-cluster-0 \
-  --initial-cluster master=https://10.142.0.2:2380,node1=https://10.142.0.3:2380,node2=https://10.142.0.4:2380 \
+  --initial-cluster master=https://10.140.0.2:2380,node1=https://10.140.0.3:2380,node2=https://10.140.0.4:2380 \
   --initial-cluster-state new \
   --data-dir=/var/lib/etcd
 Restart=on-failure

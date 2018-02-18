@@ -13,7 +13,7 @@
 > 以下動作先在 A 進行，之後再複製到 D, E
 
 ```sh
-$ export KUBE_APISERVER="https://10.142.0.2:6443"
+$ export KUBE_APISERVER="https://10.140.0.2:6443"
 $ cd /root/ssl
 
 # 設置 cluster 的參數(worknode1)
