@@ -55,29 +55,28 @@ Ref: https://github.com/cloudflare/cfssl#installation
 ## 2. 建立 CA (Certificate Authority)
 > 在 A 建立
 
-根據 cfssl 產生出來的 config.json template 格式來建立 ca-config.json 文件。
+根據 cfssl 產生出來的 config.json template 格式來建立 ca-config.json 文件。  
+- 創建路徑
 
-```shell=
+```sh
 $ sudo su -
-$ mkdir /root/ssl
-$ cd /root/ssl
-$ cfssl print-defaults config > config.json
-$ cfssl print-defaults csr > csr.json
+$ mkdir -p /etc/kubernetes/ssl
+$ cd /etc/kubernetes/ssl
+```
+
+- Create the CA configuration file  
+
+```sh
 $ cat > ca-config.json <<EOF
 {
   "signing": {
     "default": {
-      "expiry": "87600h"
+      "expiry": "8760h"
     },
     "profiles": {
       "kubernetes": {
-        "usages": [
-            "signing",
-            "key encipherment",
-            "server auth",
-            "client auth"
-        ],
-        "expiry": "87600h"
+        "usages": ["signing", "key encipherment", "server auth", "client auth"],
+        "expiry": "8760h"
       }
     }
   }
@@ -95,12 +94,50 @@ Note:
 > 在 A 建立
 
 根據第二步驟的 cfssl 產生出來的 csr.json template 格式來建立 ca-csr.json 文件。  
-- 編輯 ca-csr.json 文件
+
+- Create the CA certificate signing request  
+
+```sh
+cat > ca-csr.json <<EOF
+{
+  "CN": "Kubernetes",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "TW",
+      "L": "Hsinchu",
+      "O": "Kubernetes",
+      "OU": "CA",
+      "ST": "Hsinchu"
+    }
+  ]
+}
+EOF
 ```
-$ vim /root/ssl/ca-csr.json
+
+## 4. 生成 CA 憑證私鑰
+> 在 A 建立
+
+```sh
+$ cd /etc/kubernetes/ssl
+$ cfssl gencert -initca ca-csr.json | cfssljson -bare ca
 ```
-- 編輯內容
-```javascript
+
+生成 ca.pem, ca.csr, ca-key.pem(CA 私鑰,要保管好)  
+
+> **複製 `ca.pem, ca-key.pem` 到 A~C, 複製 `ca.pem` 到 D-E，都在 /etc/kubernetes/ssl/ 底下**
+
+## 5. 建立 kubernetes API certificate
+> 在 A 建立
+
+保證 client 端和 Kubernetes API 的驗證  
+
+- 編輯 kubernetes-csr.json  
+```sh
+cat > kubernetes-csr.json <<EOF
 {
   "CN": "kubernetes",
   "key": {
@@ -110,73 +147,28 @@ $ vim /root/ssl/ca-csr.json
   "names": [
     {
       "C": "TW",
-      "ST": "Hsinchu",
       "L": "Hsinchu",
-      "O": "k8s",
-      "OU": "System"
+      "O": "Kubernetes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Hsinchu"
     }
   ]
 }
+EOF
 ```
 
-## 4. 生成 CA 憑證私鑰
-> 在 A 建立
-
-```sh
-$ cd /root/ssl
-$ cfssl gencert -initca ca-csr.json | cfssljson -bare ca
-```
-
-生成 ca.pem, ca.csr, ca-key.pem(CA 私鑰,要保管好)  
-
-> **複製 `ca.pem, ca-key.pem` 到 A~C, 複製 `ca.pem` 到 D~E，都在 /etc/kubernetes/ssl/ 底下**
-
-## 5. 建立 kubernetes API certificate
-> 在 A 建立
-
-保證 client 端和 Kubernetes API 的驗證  
-
-- 編輯 kubernetes-csr.json  
-```sh
-$ vim /root/ssl/kubernetes-csr.json
-```
-
-- 編輯內容  
-```javascript
-{
-    "CN": "kubernetes",
-    "hosts": [
-      "127.0.0.1",
-      "10.140.0.2",
-      "10.140.0.3",
-      "10.140.0.4",
-      "kubernetes",
-      "kubernetes.default",
-      "kubernetes.default.svc",
-      "kubernetes.default.svc.cluster",
-      "kubernetes.default.svc.cluster.local"
-    ],
-    "key": {
-        "algo": "rsa",
-        "size": 2048
-    },
-    "names": [
-        {
-            "C": "TW",
-            "ST": "Hsinchu",
-            "L": "Hsinchu",
-            "O": "k8s",
-            "OU": "System"
-        }
-    ]
-}
-```
 
 - 生成 kubernetes憑證和私鑰
 
 ```sh
-$ /root/ssl
-$ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
+$ cd /etc/kubernetes/ssl
+$ cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname=10.140.0.2,10.140.0.3,10.140.0.4,10.140.0.1,35.229.192.27,127.0.0.1,kubernetes.default \
+  -profile=kubernetes \
+  kubernetes-csr.json | cfssljson -bare kubernetes
 ```
 
 產生 `kubernetes.csr, kubernetes-key.pem,  kubernetes.pem`
@@ -189,14 +181,11 @@ $ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=ku
 
 - 建立 admin-csr.json 檔案
 ```sh
-vim /root/ssl/admin-csr.json
-```
+cd /etc/kubernetes/ssl
 
-- 編輯內容
-```javascript
+cat > admin-csr.json <<EOF
 {
   "CN": "admin",
-  "hosts": [],
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -204,13 +193,14 @@ vim /root/ssl/admin-csr.json
   "names": [
     {
       "C": "TW",
-      "ST": "Hsinchu",
       "L": "Hsinchu",
       "O": "system:masters",
-      "OU": "System"
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Hsinchu"
     }
   ]
 }
+EOF
 ```
 - 生成 admin 憑證與私鑰
 ```sh
@@ -226,13 +216,9 @@ Reflects services as defined in the Kubernetes API on each node
 
 - 建立 kube-proxy-csr.json 檔案
 ```sh
-vim /root/ssl/kube-proxy-csr.json
-```
-- 編輯內容
-```javascript=
+cat > kube-proxy-csr.json <<EOF
 {
-"CN": "system:kube-proxy",
-  "hosts": [],
+  "CN": "system:kube-proxy",
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -240,13 +226,14 @@ vim /root/ssl/kube-proxy-csr.json
   "names": [
     {
       "C": "TW",
-      "ST": "Hsinchu",
       "L": "Hsinchu",
-      "O": "k8s",
-      "OU": "System"
+      "O": "system:node-proxier",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Hsinchu"
     }
   ]
 }
+EOF
 ```
 Note:  
 - CN 欄位指定該憑證的 User 是 system:kube-proxy
@@ -265,16 +252,12 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kube
 
 使用 Node Authorizer 授權來自 Kubelet 的 API 請求。為了要通過 Node Authorizer 的授權, Kubelet 必須使用名稱 system:node:<nodeName> 的憑證來證明它屬於 system:nodes 用户组。  
 
-### 給 Worknode 1
-- 建立 worknode1-csr.json 文件
+### 給 Workernode 1
+- 建立 workernode1-csr.json 文件
 ```
-vim /root/ssl/worknode1-csr.json
-```
-- 編輯內容
-```sh
+cat > workernode1-csr.json <<EOF
 {
-"CN": "system:node:worknode1",
-  "hosts": [],
+  "CN": "system:node:workernode1",
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -282,30 +265,27 @@ vim /root/ssl/worknode1-csr.json
   "names": [
     {
       "C": "TW",
-      "ST": "Hsinchu",
       "L": "Hsinchu",
       "O": "system:nodes",
-      "OU": "System"
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Hsinchu"
     }
   ]
 }
+EOF
 ```
 - 生成憑證和私鑰
 ```
-cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=worknode1,10.142.0.5 -profile=kubernetes worknode1-csr.json | cfssljson -bare worknode1
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=workernode1,10.140.0.5 -profile=kubernetes workernode1-csr.json | cfssljson -bare workernode1
 ```
 > **Copy `worknode1.pem worknode1-key.pem` in D**
 
 ### 給 Worknode 2
-- 建立 worknode2-csr.json 文件
+- 建立 workernode2-csr.json 文件
 ```
-vim /root/ssl/worknode2-csr.json
-```
-- 編輯內容
-```sh
+cat > workernode2-csr.json <<EOF
 {
-"CN": "system:node:worknode1",
-  "hosts": [],
+  "CN": "system:node:workernode2",
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -313,17 +293,18 @@ vim /root/ssl/worknode2-csr.json
   "names": [
     {
       "C": "TW",
-      "ST": "Hsinchu",
       "L": "Hsinchu",
       "O": "system:nodes",
-      "OU": "System"
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Hsinchu"
     }
   ]
 }
+EOF
 ```
 - 生成憑證和私鑰
 ```
-cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=worknode1,10.142.0.6 -profile=kubernetes worknode2-csr.json | cfssljson -bare worknode2
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=workernode2,10.140.0.6 -profile=kubernetes workernode2-csr.json | cfssljson -bare workernode2
 ```
 > **Copy `worknode2.pem worknode2-key.pem` in E**
 
