@@ -2,14 +2,83 @@
 
 ## Table of Contents
 - [前言](#%E5%89%8D%E8%A8%80)
-- [建立 kubectl kubeconfig 文件](#%E5%BB%BA%E7%AB%8B-kubectl-kubeconfig-%E6%96%87%E4%BB%B6)
+- [建立 kubelets 客戶端的 TLS Bootstrap]()
+- [建立 admin.conf 的 kubeconfig]()
+- [建立 workernode kubectl kubeconfig 文件](#%E5%BB%BA%E7%AB%8B-kubectl-kubeconfig-%E6%96%87%E4%BB%B6)
 - [建立 kube-proxy kubeconfig 文件](#%E5%BB%BA%E7%AB%8B-kube-proxy-kubeconfig-%E6%96%87%E4%BB%B6)
 
 ## 前言
-在上一步已經建立好 kubelet 和 kube-proxy 的憑證和私鑰。  
+在上一步已經建立好 kubelet, admin, kube-controller-manager, kube-scheduler, kube-proxy 的憑證和私鑰。  
 而 kubeconfig 是 Kubernetes client 端和 API Server 認證的保證。  
 
-## 建立 kubectl kubeconfig 文件
+## 建立 kubelets 客戶端的 TLS Bootstrap
+set up TLS client certificate bootstrapping for kubelets
+ref: https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#kubelet-configuration
+```sh
+$ export KUBE_APISERVER="10.140.0.2"
+$ cd /etc/kubernetes/ssl
+
+# generate tokens
+$ export BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x | tr -d ' ')
+
+$ cat <<EOF > /etc/kubernetes/token.csv
+${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,"system:kubelet-bootstrap"
+EOF
+
+
+# bootstrap set-cluster
+$ kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://${KUBE_APISERVER}:6443 \
+    --kubeconfig=../bootstrap.kubeconfig
+
+# bootstrap set-credentials
+$ kubectl config set-credentials kubelet-bootstrap \
+    --token=${BOOTSTRAP_TOKEN} \
+    --kubeconfig=../bootstrap.kubeconfig
+
+# bootstrap set-context
+$ kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=kubelet-bootstrap \
+   --kubeconfig=../bootstrap.kubeconfig
+
+
+# bootstrap set default context
+$ kubectl config use-context default --kubeconfig=../bootstrap.kubeconfig
+```
+
+## 建立 admin.conf 的 kubeconfig
+建立 admin.conf 配置對集群的訪問的文件
+```
+$ cd /etc/kubernetes/ssl/
+# admin set-cluster
+$ kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://${KUBE_APISERVER}:6443 \
+    --kubeconfig=../admin.conf
+
+# admin set-credentials
+$ kubectl config set-credentials kubernetes-admin \
+    --client-certificate=admin.pem \
+    --client-key=admin-key.pem \
+    --embed-certs=true \
+    --kubeconfig=../admin.conf
+
+# admin set-context
+$ kubectl config set-context kubernetes-admin@kubernetes \
+    --cluster=kubernetes-the-hard-way \
+    --user=kubernetes-admin \
+    --kubeconfig=../admin.conf
+
+# admin set default context
+$ kubectl config use-context kubernetes-admin@kubernetes \
+    --kubeconfig=../admin.conf
+```
+
+## 建立 workernode kubectl kubeconfig 文件
 > 以下動作先在 A 進行，之後再複製到 D, E
 
 ```sh
