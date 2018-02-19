@@ -13,55 +13,55 @@
 > 以下動作先在 A 進行，之後再複製到 D, E
 
 ```sh
-$ export KUBE_APISERVER="https://10.140.0.2:6443"
-$ cd /root/ssl
+$ export KUBE_APISERVER="10.140.0.2"
+$ cd /etc/kubernetes/ssl
 
 # 設置 cluster 的參數(worknode1)
-kubectl config set-cluster kubernetes \
-  --certificate-authority=ca.pem \
-  --embed-certs=true \
-  --server=https://${KUBE_APISERVER}:6443 \
-  --kubeconfig=worknode1.kubeconfig
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://${KUBE_APISERVER}:6443 \
+    --kubeconfig=workernode1.kubeconfig
 
 # 設置 cluster 的參數(worknode2)
-kubectl config set-cluster kubernetes \
-  --certificate-authority=ca.pem \
-  --embed-certs=true \
-  --server=https://${KUBE_APISERVER}:6443 \
-  --kubeconfig=worknode2.kubeconfig
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://${KUBE_APISERVER}:6443 \
+    --kubeconfig=workernode2.kubeconfig
 
 # 設定 client 端的認證參數 (worknode1)
-kubectl config set-credentials system:node:worknode1 \
-  --client-certificate=worknode1.pem \
-  --embed-certs=true \
-  --client-key=worknode1-key.pem \
-  --kubeconfig=worknode1.kubeconfig
+  kubectl config set-credentials system:node:workernode1 \
+    --client-certificate=workernode1.pem \
+    --client-key=workernode1-key.pem \
+    --embed-certs=true \
+    --kubeconfig=workernode1.kubeconfig
 
 # 設定 client 端的認證參數 (worknode2)
-kubectl config set-credentials system:node:worknode2 \
-  --client-certificate=worknode2.pem \
-  --embed-certs=true \
-  --client-key=worknode2-key.pem \
-  --kubeconfig=worknode2.kubeconfig
+  kubectl config set-credentials system:node:workernode2 \
+    --client-certificate=workernode2.pem \
+    --client-key=workernode2-key.pem \
+    --embed-certs=true \
+    --kubeconfig=workernode2.kubeconfig
 
 # 設置上下文參數(worknode1)
-kubectl config set-context default \
-  --cluster=kubernetes \
-  --user=system:node:worknode1 \
-  --kubeconfig=worknode1.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:node:workernode1 \
+    --kubeconfig=workernode1.kubeconfig
 
 # 設置上下文參數(worknode2)
-kubectl config set-context default \
-  --cluster=kubernetes \
-  --user=system:node:worknode2 \
-  --kubeconfig=worknode2.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:node:workernode2 \
+    --kubeconfig=workernode2.kubeconfig
 
 # 設置默認的上下文
-kubectl config use-context default --kubeconfig=worknode1.kubeconfig
-kubectl config use-context default --kubeconfig=worknode2.kubeconfig
+kubectl config use-context default --kubeconfig=workernode1.kubeconfig
+kubectl config use-context default --kubeconfig=workernode2.kubeconfig
 ```
 
-- 將 worknode1.kubeconfig 複製到 D, worknode2.kubeconfig 複製到 E
+- 將 workernode1.kubeconfig 複製到 D 的 `/etc/kubernetes`, workernode2.kubeconfig 複製到 E 的 `/etc/kubernetes`
 
 ## 建立 kube-proxy kubeconfig 文件
 > 以下動作先在 A 進行，之後再複製到 D, E
@@ -70,22 +70,22 @@ kubectl config use-context default --kubeconfig=worknode2.kubeconfig
 $ cd /etc/kubernetes/ssl
 
 # 設置 cluster 的參數
-kubectl config set-cluster kubernetes \
-  --certificate-authority=/etc/kubernetes/ssl/ca.pem \
+kubectl config set-cluster kubernetes-the-hard-way \
+  --certificate-authority=ca.pem \
   --embed-certs=true \
-  --server=${KUBE_APISERVER} \
+  --server=https://${KUBE_APISERVER}:6443 \
   --kubeconfig=kube-proxy.kubeconfig
 
 # 設定 client 端的認證參數 
 kubectl config set-credentials kube-proxy \
-  --client-certificate=/etc/kubernetes/ssl/kube-proxy.pem \
-  --client-key=/etc/kubernetes/ssl/kube-proxy-key.pem \
+  --client-certificate=kube-proxy.pem \
+  --client-key=kube-proxy-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-proxy.kubeconfig
 
 # 設置上下文參數
 kubectl config set-context default \
-  --cluster=kubernetes \
+  --cluster=kubernetes-the-hard-way \
   --user=kube-proxy \
   --kubeconfig=kube-proxy.kubeconfig
 
@@ -93,4 +93,4 @@ kubectl config set-context default \
 kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
 ```
 
-- 將 kube-proxy.kubeconfig 複製到 D, E
+- 將 kube-proxy.kubeconfig 複製到 D, E 的 `/etc/kubernetes`
