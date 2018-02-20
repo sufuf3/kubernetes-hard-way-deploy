@@ -851,6 +851,64 @@ $ cp /etc/kubernetes/admin.conf ~/.kube/config
 ```
 
 ## RBAC 設定
+RBAC for Kubelet Authorization  
+
+```yaml
+$ cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: system:kube-apiserver-to-kubelet
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/proxy
+      - nodes/stats
+      - nodes/log
+      - nodes/spec
+      - nodes/metrics
+    verbs:
+      - "*"
+EOF
+```
+```yaml
+$ cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:kube-apiserver
+  namespace: ""
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kube-apiserver-to-kubelet
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: kube-apiserver
+EOF
+```
 
 ## 驗證
+```sh
+$ kubectl get cs
+NAME                 STATUS    MESSAGE              ERROR
+scheduler            Healthy   ok                   
+controller-manager   Healthy   ok                   
+etcd-0               Healthy   {"health": "true"}   
 
+$ kubectl get node
+NAME      STATUS     ROLES     AGE       VERSION
+master1   NotReady   master    26m       v1.8.8
+
+$ kubectl -n kube-system get po
+NAME                              READY     STATUS    RESTARTS   AGE
+kube-apiserver-master1            1/1       Running   0          26m
+kube-controller-manager-master1   1/1       Running   0          26m
+kube-scheduler-master1            1/1       Running   0          26m
+```
