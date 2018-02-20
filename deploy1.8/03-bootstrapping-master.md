@@ -16,6 +16,12 @@
 - [建立 Kubelet master certificate & kubeconfig]()
 - [Service account key]()
 - [安裝 Kubernetes 核心元件]()
+- [設定與啟用 Secret data]()
+- [建立 Audit Policy]()
+- [設定與重新啟動 kubelet]()
+- [編輯 ~/.kube/config]()
+- [RBAC 設定]()
+- [驗證]()
 
 ## 前言
 安裝以下元件
@@ -476,4 +482,324 @@ sa.key  sa.pub
 ```
 
 ## 安裝 Kubernetes 核心元件
+使用 Kubernetes Static Pod 安裝元件  
+```sh
+$ mkdir -p /etc/kubernetes/manifests && cd /etc/kubernetes/manifests
+```
+
+- kube-apiserver
+```sh
+$ vim apiserver.yml
+```
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ""
+  labels:
+    component: kube-apiserver
+    tier: control-plane
+  name: kube-apiserver
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers :
+  - name: kube-apiserver
+    image: gcr.io/google_containers/kube-apiserver-amd64:v1.8.8
+    command:
+      - kube-apiserver
+      - --v=0
+      - --logtostderr=true
+      - --allow-privileged=true
+      - --bind-address=0.0.0.0
+      - --secure-port=6443
+      - --insecure-port=0
+      - --advertise-address=10.140.0.2
+      - --service-cluster-ip-range=10.96.0.0/12
+      - --service-node-port-range=30000-32767
+      - --etcd-servers=https://10.140.0.2:2379
+      - --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem
+      - --etcd-certfile=/etc/etcd/ssl/etcd.pem
+      - --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem
+      - --client-ca-file=/etc/kubernetes/ssl/ca.pem
+      - --tls-cert-file=/etc/kubernetes/ssl/apiserver.pem
+      - --tls-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+      - --kubelet-client-certificate=/etc/kubernetes/ssl/apiserver.pem
+      - --kubelet-client-key=/etc/kubernetes/ssl/apiserver-key.pem
+      - --service-account-key-file=/etc/kubernetes/ssl/sa.pub
+      - --token-auth-file=/etc/kubernetes/token.csv
+      - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+      - --admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota
+      - --authorization-mode=Node,RBAC
+      - --enable-bootstrap-token-auth=true
+      - --requestheader-client-ca-file=/etc/kubernetes/ssl/front-proxy-ca.pem
+      - --proxy-client-cert-file=/etc/kubernetes/ssl/front-proxy-client.pem
+      - --proxy-client-key-file=/etc/kubernetes/ssl/front-proxy-client-key.pem
+      - --requestheader-allowed-names=aggregator
+      - --requestheader-group-headers=X-Remote-Group
+      - --requestheader-extra-headers-prefix=X-Remote-Extra-
+      - --requestheader-username-headers=X-Remote-User
+      - --audit-log-maxage=30
+      - --audit-log-maxbackup=3
+      - --audit-log-maxsize=100
+      - --audit-log-path=/var/log/kubernetes/audit.log
+      - --audit-policy-file=/etc/kubernetes/audit-policy.yml
+      - --experimental-encryption-provider-config=/etc/kubernetes/encryption.yml
+      - --event-ttl=1h
+    livenessProbe:
+      failureThreshold: 8
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 6443
+        scheme: HTTPS
+      initialDelaySeconds: 15
+      timeoutSeconds: 15
+    resources:
+      requests:
+        cpu: 250m
+    volumeMounts:
+    - mountPath: /var/log/kubernetes
+      name: k8s-audit-log
+    - mountPath: /etc/kubernetes/ssl
+      name: k8s-certs
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: ca-certs
+      readOnly: true
+    - mountPath: /etc/kubernetes/encryption.yml
+      name: encryption-config
+      readOnly: true
+    - mountPath: /etc/kubernetes/audit-policy.yml
+      name: audit-config
+      readOnly: true
+    - mountPath: /etc/kubernetes/token.csv
+      name: token-csv
+      readOnly: true
+    - mountPath: /etc/etcd/ssl
+      name: etcd-ca-certs
+      readOnly: true
+  volumes:
+  - hostPath:
+      path: /var/log/kubernetes
+      type: DirectoryOrCreate
+    name: k8s-audit-log
+  - hostPath:
+      path: /etc/kubernetes/ssl
+      type: DirectoryOrCreate
+    name: k8s-certs
+  - hostPath:
+      path: /etc/kubernetes/encryption.yml
+      type: FileOrCreate
+    name: encryption-config
+  - hostPath:
+      path: /etc/kubernetes/audit-policy.yml
+      type: FileOrCreate
+    name: audit-config
+  - hostPath:
+      path: /etc/kubernetes/token.csv
+      type: FileOrCreate
+    name: token-csv
+  - hostPath:
+      path: /etc/ssl/certs
+      type: DirectoryOrCreate
+    name: ca-certs
+  - hostPath:
+      path: /etc/etcd/ssl
+      type: DirectoryOrCreate
+    name: etcd-ca-certs
+```
+
+- kube-controller-manager
+
+```sh
+$ vim manager.yml
+```
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ""
+  labels:
+    component: kube-controller-manager
+    tier: control-plane
+  name: kube-controller-manager
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-controller-manager
+    image: gcr.io/google_containers/kube-controller-manager-amd64:v1.8.8
+    command:
+      - kube-controller-manager
+      - --v=0
+      - --logtostderr=true
+      - --address=127.0.0.1
+      - --root-ca-file=/etc/kubernetes/ssl/ca.pem
+      - --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem
+      - --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem
+      - --service-account-private-key-file=/etc/kubernetes/ssl/sa.key
+      - --kubeconfig=/etc/kubernetes/controller-manager.conf
+      - --leader-elect=true
+      - --use-service-account-credentials=true
+      - --node-monitor-grace-period=40s
+      - --node-monitor-period=5s
+      - --pod-eviction-timeout=2m0s
+      - --controllers=*,bootstrapsigner,tokencleaner
+      - --allocate-node-cidrs=true
+      - --cluster-cidr=10.244.0.0/16
+      - --node-cidr-mask-size=24
+    livenessProbe:
+      failureThreshold: 8
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10252
+        scheme: HTTP
+      initialDelaySeconds: 15
+      timeoutSeconds: 15
+    resources:
+      requests:
+        cpu: 200m
+    volumeMounts:
+    - mountPath: /etc/kubernetes/ssl
+      name: k8s-certs
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: ca-certs
+      readOnly: true
+    - mountPath: /etc/kubernetes/controller-manager.conf
+      name: kubeconfig
+      readOnly: true
+    - mountPath: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+      name: flexvolume-dir
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/ssl
+      type: DirectoryOrCreate
+    name: k8s-certs
+  - hostPath:
+      path: /etc/ssl/certs
+      type: DirectoryOrCreate
+    name: ca-certs
+  - hostPath:
+      path: /etc/kubernetes/controller-manager.conf
+      type: FileOrCreate
+    name: kubeconfig
+  - hostPath:
+      path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+      type: DirectoryOrCreate
+    name: flexvolume-dir
+```
+
+- kube-scheduler
+
+```sh
+$ vim scheduler.yml
+```
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ""
+  labels:
+    component: kube-scheduler
+    tier: control-plane
+  name: kube-scheduler
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-scheduler
+    image: gcr.io/google_containers/kube-scheduler-amd64:v1.8.8
+    command:
+      - kube-scheduler
+      - --v=0
+      - --logtostderr=true
+      - --address=127.0.0.1
+      - --leader-elect=true
+      - --kubeconfig=/etc/kubernetes/scheduler.conf
+    livenessProbe:
+      failureThreshold: 8
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10251
+        scheme: HTTP
+      initialDelaySeconds: 15
+      timeoutSeconds: 15
+    resources:
+      requests:
+        cpu: 100m
+    volumeMounts:
+    - mountPath: /etc/kubernetes/ssl
+      name: k8s-certs
+      readOnly: true
+    - mountPath: /etc/kubernetes/scheduler.conf
+      name: kubeconfig
+      readOnly: true
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/ssl
+      type: DirectoryOrCreate
+    name: k8s-certs
+  - hostPath:
+      path: /etc/kubernetes/scheduler.conf
+      type: FileOrCreate
+    name: kubeconfig
+```
+
+## 設定與啟用 Secret data
+
+一般情况下，etcd 包含了通過 Kubernetes API 可以拿到所有資料，可以讓授予 etcd 的使用者對 cluster 進行攻擊。  
+因此需要來對這些資料進行加密。  
+k8s 使用 rest 加密機制，它是 α 特性，会加密 etcd 裡面的 Secret 資源，以防止某一方通過查看这些 secret 的内容獲得 etcd 的備份。  
+所以這邊要來設定與啟用 rest 加密 etcd 中的 secret data 的機制。  
+  
+Ref:  
+https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/  
+https://k8smeetup.github.io/docs/tasks/administer-cluster/securing-a-cluster/  
+
+1. 建立加密密鑰
+```sh
+$ head -c 32 /dev/urandom | base64
+1rxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkk
+```
+2. 加密配置設定
+```sh
+$ cat <<EOF > /etc/kubernetes/encryption.yml
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: 1rxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkk
+      - identity: {}
+EOF
+```
+
+## 建立 Audit Policy
+
+```sh
+$ cat <<EOF > /etc/kubernetes/audit-policy.yml
+apiVersion: audit.k8s.io/v1beta1
+kind: Policy
+rules:
+- level: Metadata
+EOF
+```
+## 設定與重新啟動 kubelet
+
+## 編輯 ~/.kube/config
+
+## RBAC 設定
+
+## 驗證
 
