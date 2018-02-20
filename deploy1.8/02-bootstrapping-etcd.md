@@ -120,11 +120,17 @@ etcd-ca-key.pem  etcd-ca.pem  etcd-key.pem  etcd.pem
 
 > 在 A 安裝
 
+1. 下載 Etcd
+(不能用 apt 裝，因為要版本 3 以上)
 ```sh
 $ sudo su -
-$ apt install etcd
+$ cd && wget -qO- --show-progress "https://github.com/coreos/etcd/releases/download/v3.2.9/etcd-v3.2.9-linux-amd64.tar.gz" | tar -zx
+$ mv etcd-v3.2.9-linux-amd64/etcd* /usr/local/bin/ && rm -rf etcd-v3.2.9-linux-amd64
 ```
-Node: etcd 指令在 `/usr/bin` 底下
+2. 新建 Etcd Group 與 User
+```
+$ groupadd etcd && useradd -c "Etcd user" -g etcd -s /sbin/nologin -r etcd
+```
 
 ## 設定 etcd
 
@@ -180,7 +186,7 @@ EnvironmentFile=-/etc/etcd/etcd.conf
 Type=notify
 User=etcd
 PermissionsStartOnly=true
-ExecStart=/usr/bin/etcd
+ExecStart=/usr/local/bin/etcd
 Restart=on-failure
 RestartSec=10
 LimitNOFILE=65536
@@ -207,7 +213,6 @@ systemctl enable etcd.service && systemctl start etcd.service
 > 在 A 執行看看
 
 ```
-$ etcdctl --ca-file=/etc/etcd/ssl/etcd-ca.pem --cert-file=/etc/etcd/ssl/etcd.pem --key-file=/etc/etcd/ssl/etcd-key.pem cluster-health
-member ce2a822cea30bfca is healthy: got healthy result from http://localhost:2379
-cluster is healthy
+$ ETCDCTL_API=3 etcdctl     --cacert=${CA}/etcd-ca.pem     --cert=${CA}/etcd.pem     --key=${CA}/etcd-key.pem     --endpoints="https://10.140.0.2:2379"     endpoint health
+https://10.140.0.2:2379 is healthy: successfully committed proposal: took = 699.357µs
 ```
