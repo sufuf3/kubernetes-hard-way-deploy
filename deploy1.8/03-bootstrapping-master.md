@@ -766,7 +766,7 @@ https://k8smeetup.github.io/docs/tasks/administer-cluster/securing-a-cluster/
 1. 建立加密密鑰
 ```sh
 $ head -c 32 /dev/urandom | base64
-1rxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkk
+Nekla5byJTwg8Bz4eHnQ7DQpSBvD+YE6AU6ofPUNpYk=
 ```
 2. 加密配置設定
 ```sh
@@ -780,7 +780,7 @@ resources:
       - aescbc:
           keys:
             - name: key1
-              secret: 1rxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkk
+              secret: Nekla5byJTwg8Bz4eHnQ7DQpSBvD+YE6AU6ofPUNpYk=
       - identity: {}
 EOF
 ```
@@ -796,8 +796,59 @@ rules:
 EOF
 ```
 ## 設定與重新啟動 kubelet
+```sh
+$ mkdir -p /etc/systemd/system/kubelet.service.d
+```
+```sh
+$ vim /lib/systemd/system/kubelet.service
+```
+```yaml
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=http://kubernetes.io/docs/
+
+[Service]
+ExecStart=/usr/local/bin/kubelet
+Restart=on-failure
+StartLimitInterval=0
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+```sh
+vim /etc/systemd/system/kubelet.service.d/10-kubelet.conf
+```
+```yaml
+[Service]
+Environment="KUBELET_KUBECONFIG_ARGS=--address=0.0.0.0 --port=10250 --kubeconfig=/etc/kubernetes/kubelet.conf"
+Environment="KUBE_LOGTOSTDERR=--logtostderr=true --v=0"
+Environment="KUBELET_SYSTEM_PODS_ARGS=--pod-manifest-path=/etc/kubernetes/manifests --allow-privileged=true --anonymous-auth=false"
+Environment="KUBELET_POD_CONTAINER=--pod-infra-container-image=gcr.io/google_containers/pause:3.0"
+Environment="KUBELET_NETWORK_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"
+Environment="KUBELET_DNS_ARGS=--cluster-dns=10.96.0.10 --cluster-domain=cluster.local"
+Environment="KUBELET_AUTHZ_ARGS=--authorization-mode=Webhook --client-ca-file=/etc/kubernetes/ssl/ca.pem"
+Environment="KUBELET_CADVISOR_ARGS=--cadvisor-port=0"
+Environment="KUBELET_CERTIFICATE_ARGS=--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki"
+Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false --serialize-image-pulls=false"
+Environment="KUBE_NODE_LABEL=--node-labels=node-role.kubernetes.io/master=true"
+ExecStart=
+ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBE_LOGTOSTDERR $KUBELET_POD_CONTAINER $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_EXTRA_ARGS $KUBE_NODE_LABEL
+```
+- 重新啟動
+```sh
+$ mkdir -p /var/lib/kubelet /var/log/kubernetes
+$ systemctl enable kubelet.service && systemctl start kubelet.service
+```
+- Check
+```sh
+$ netstat -ntlp
+```
 
 ## 編輯 ~/.kube/config
+```sh
+$ cp /etc/kubernetes/admin.conf ~/.kube/config
+```
 
 ## RBAC 設定
 
