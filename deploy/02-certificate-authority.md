@@ -8,10 +8,13 @@
 - [4. 生成 CA 憑證私鑰](#4-%E7%94%9F%E6%88%90-ca-%E6%86%91%E8%AD%89%E7%A7%81%E9%91%B0)
 - [5. 建立 kubernetes API certificate](#5-%E5%BB%BA%E7%AB%8B-kubernetes-api-certificate)
 - [6. 建立 admin certificate](#6-%E5%BB%BA%E7%AB%8B-admin-certificate)
-- [7. 建立 kube-proxy certificate](#7-%E5%BB%BA%E7%AB%8B-kube-proxy-certificate)
-- [8. 建立 Kubelet client 憑證](#8-%E5%BB%BA%E7%AB%8B-kubelet-client-%E6%86%91%E8%AD%89)
-  * [給 Worknode 1](%E7%B5%A6-worknode-1)
-  * [給 Worknode 2](#%E7%B5%A6-worknode-2)
+- [7. 建立 Controller manager certificate]()
+- [8. 建立 Scheduler certificate]()
+- [9. 建立 kube-proxy certificate](#7-%E5%BB%BA%E7%AB%8B-kube-proxy-certificate)
+- [10. 建立 Kubelet client 憑證](#8-%E5%BB%BA%E7%AB%8B-kubelet-client-%E6%86%91%E8%AD%89)
+  * [給 master]()
+  * [給 Workernode 1](%E7%B5%A6-worknode-1)
+  * [給 Workernode 2](#%E7%B5%A6-worknode-2)
 - [複製檔案](#%E8%A4%87%E8%A3%BD%E6%AA%94%E6%A1%88)
 
 ## 0. 簡略概述
@@ -209,7 +212,63 @@ $ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=ku
 
 Admin 憑證，是用來生成管理員用的 kube config 配置文件用的。一般建議使用 RBAC 對 kubernetes 進行角色權限控制， kubernetes 将憑證中的 CN 欄位作為 User， O 欄位為 Group。
 
-## 7. 建立 kube-proxy certificate
+## 7. 建立 Controller manager certificate
+- 建立 manager-csr.json 檔案
+```
+$ cd /etc/kubernetes/ssl
+$ cat > manager-csr.json <<EOF
+{
+  "CN": "system:kube-controller-manager",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  }, 
+  "names": [
+    {
+      "C": "TW",
+      "ST": "Hsinchu",
+      "OU": "Kubernetes The Hard Way",
+      "O": "system:kube-controller-manager",
+      "L": "Hsinchu"
+    }
+  ]
+}
+EOF
+```
+- 生成 kube-controller-manager 憑證與私鑰
+```
+$ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes manager-csr.json | cfssljson -bare controller-manager
+```
+
+## 8. 建立 Scheduler certificate
+- 建立 scheduler-csr.json 檔案
+```
+$ cd /etc/kubernetes/ssl
+$ cat > scheduler-csr.json <<EOF
+{
+  "CN": "system:kube-scheduler",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  }, 
+  "names": [
+    {
+      "C": "TW",
+      "ST": "Hsinchu",
+      "OU": "Kubernetes The Hard Way",
+      "O": "system:kube-scheduler",
+      "L": "Hsinchu"
+    }
+  ]
+}
+EOF
+```
+- 生成 kube-scheduler 憑證與私鑰
+```
+$ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes scheduler-csr.json | cfssljson -bare scheduler
+```
+
+## 9. 建立 kube-proxy certificate
 > 在 A 建立
 
 Reflects services as defined in the Kubernetes API on each node
@@ -247,10 +306,37 @@ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kube
 
 > **Copy `kube-proxy.pem kube-proxy-key.pem` in D~E
 
-## 8. 建立 Kubelet client 憑證
+## 10. 建立 Kubelet client 憑證
 > 在 A 建立，完成後將 key 複製到 worker node
 
 使用 Node Authorizer 授權來自 Kubelet 的 API 請求。為了要通過 Node Authorizer 的授權, Kubelet 必須使用名稱 system:node:<nodeName> 的憑證來證明它屬於 system:nodes 用户组。  
+
+### 給 Master
+- 建立 kubeletmaster-csr.json 文件
+```
+cat > kubeletmaster-csr.json <<EOF
+{
+  "CN": "system:node:master",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "TW",
+      "L": "Hsinchu",
+      "O": "system:nodes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Hsinchu"
+    }
+  ]
+}
+EOF
+```
+- 生成憑證和私鑰
+```
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname=master,10.140.0.2 -profile=kubernetes kubeletmaster-csr.json | cfssljson -bare kubeletmaster
+```
 
 ### 給 Workernode 1
 - 建立 workernode1-csr.json 文件
