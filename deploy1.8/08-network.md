@@ -21,7 +21,7 @@ $ mkdir -p /etc/kubernetes/network && cd /etc/kubernetes/network
 $ calico.yaml
 ```
 ```yaml
-apiVersion: rbac.authorization.k8s.io/v1beta1
+piVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
   name: calico-kube-controllers
@@ -57,33 +57,28 @@ metadata:
   name: calico-kube-controllers
   namespace: kube-system
 ---
-
-# This manifest deploys the Calico Kubernetes controllers.
-# See https://github.com/projectcalico/kube-controllers
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: calico-kube-controllers
+  name: calico-policy-controller
   namespace: kube-system
   labels:
-    k8s-app: calico-kube-controllers
+    k8s-app: calico-policy
 spec:
-  # The controllers can only have a single active instance.
-  replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
-      name: calico-kube-controllers
+      name: calico-policy-controller
       namespace: kube-system
       labels:
-        k8s-app: calico-kube-controllers
+        k8s-app: calico-policy
     spec:
       hostNetwork: true
       serviceAccountName: calico-kube-controllers
       containers:
-      - name: calico-kube-controllers
-        image: quay.io/calico/kube-controllers:v2.0.0
+      - name: calico-policy-controller
+        image: quay.io/calico/kube-controllers:v1.0.3
         env:
           - name: ETCD_ENDPOINTS
             value: "https://10.140.0.2:2379"
@@ -105,7 +100,7 @@ spec:
 ```
 ```sh
 $ kubectl apply -f calico.yaml
-$ kubectl -n kube-system get po -l k8s-app=calico-kube-controllers
+$ kubectl -n kube-system get po -l k8s-app=calico-policy
 NAME                                       READY     STATUS    RESTARTS   AGE
 calico-kube-controllers-64b458b8d6-dfglq   0/1       Pending   0          8s
 ```
@@ -157,6 +152,7 @@ $ vim /etc/cni/net.d/10-calico.conf
     }
 }
 ```
+以 master1 為例
 ```sh
 $ vim /lib/systemd/system/calico-node.service
 ```
@@ -174,7 +170,7 @@ ExecStart=/usr/bin/docker run --net=host --privileged --name=calico-node \
   -e ETCD_CA_CERT_FILE=/etc/etcd/ssl/etcd-ca.pem \
   -e ETCD_CERT_FILE=/etc/etcd/ssl/etcd.pem \
   -e ETCD_KEY_FILE=/etc/etcd/ssl/etcd-key.pem \
-  -e NODENAME=${HOSTNAME} \
+  -e NODENAME=master1 \
   -e IP= \
   -e NO_DEFAULT_POOLS= \
   -e AS= \
@@ -193,7 +189,7 @@ ExecStart=/usr/bin/docker run --net=host --privileged --name=calico-node \
   -v /run/docker/plugins:/run/docker/plugins \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /var/log/calico:/var/log/calico \
-  quay.io/calico/node:v3.0.2
+  quay.io/calico/node:v2.6.0
 ExecStop=/usr/bin/docker rm -f calico-node
 Restart=on-failure
 RestartSec=10
@@ -222,7 +218,23 @@ export ETCD_KEY_FILE="/etc/etcd/ssl/etcd-key.pem"
 EOF
 
 $ . ~/calico-rc
+
 $ calicoctl get node -o wide
+NAME      ASN         IPV4            IPV6   
+master1   (unknown)   10.140.0.2/32        
+
+$ calicoctl node status
+Calico process is running.
+
+IPv4 BGP status
++--------------+-------------------+-------+----------+-------------+
+| PEER ADDRESS |     PEER TYPE     | STATE |  SINCE   |    INFO     |
++--------------+-------------------+-------+----------+-------------+
+| 10.140.0.3   | node-to-node mesh | up    | 01:51:45 | Established |
++--------------+-------------------+-------+----------+-------------+
+
+IPv6 BGP status
+No IPv6 peers found.
 ```
 
 - 查看 pod
