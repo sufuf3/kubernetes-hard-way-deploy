@@ -227,14 +227,21 @@ $ calicoctl node status
 Calico process is running.
 
 IPv4 BGP status
-+--------------+-------------------+-------+----------+-------------+
-| PEER ADDRESS |     PEER TYPE     | STATE |  SINCE   |    INFO     |
-+--------------+-------------------+-------+----------+-------------+
-| 10.140.0.3   | node-to-node mesh | up    | 01:51:45 | Established |
-+--------------+-------------------+-------+----------+-------------+
++--------------+-------------------+-------+------------+--------------------------------+
+| PEER ADDRESS |     PEER TYPE     | STATE |   SINCE    |              INFO              |
++--------------+-------------------+-------+------------+--------------------------------+
+| 10.140.0.3   | node-to-node mesh | up    | 2018-02-22 | Established                    |
+| 10.140.0.4   | node-to-node mesh | up    | 17:01:52   | Established                    |
++--------------+-------------------+-------+------------+--------------------------------+
 
 IPv6 BGP status
 No IPv6 peers found.
+
+$ kubectl get nodes
+NAME      STATUS    ROLES     AGE       VERSION
+master1   Ready     master    2d        v1.8.8
+node1     Ready     node      2d        v1.8.8
+node2     Ready     node      2d        v1.8.8
 ```
 
 - 查看 pod
