@@ -34,6 +34,13 @@ $ kubectl create secret generic kubernetes-dashboard-certs --from-file=$HOME/cer
 
 ## 用 kubectl 建立 kubernetes dashboard
 ```sh
-$ cd /etc/kubernetes/addon
+$ cd /etc/kubernetes/addons
 $ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
 ```
+
+## NodePort
+https://github.com/kubernetes/dashboard/wiki/Accessing-Dashboard---1.7.X-and-above#nodeport
+```sh
+kubectl -n kube-system edit service kubernetes-dashboard
+```
+Change `type: ClusterIP` to `type: NodePort` and save file
