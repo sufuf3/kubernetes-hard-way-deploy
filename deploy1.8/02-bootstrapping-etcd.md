@@ -216,3 +216,13 @@ systemctl enable etcd.service && systemctl start etcd.service
 $ ETCDCTL_API=3 etcdctl     --cacert=${CA}/etcd-ca.pem     --cert=${CA}/etcd.pem     --key=${CA}/etcd-key.pem     --endpoints="https://10.140.0.2:2379"     endpoint health
 https://10.140.0.2:2379 is healthy: successfully committed proposal: took = 699.357µs
 ```
+
+> 可以在任意台查所有的 node 並且看到底擬一台是 Leader
+```
+$ ETCDCTL_API=3 etcdctl  --write-out=table   --cacert=${CA}/etcd-ca.pem     --cert=${CA}/etcd.pem     --key=${CA}/etcd-key.pem     --endpoints="https://10.140.0.2:2379"     endpoint status
+```
+
+eg. 
+```
+$ ETCDCTL_API=3 etcdctl  --write-out=table   --cacert=${CA}/etcd-ca.pem     --cert=${CA}/etcd.pem     --key=${CA}/etcd-key.pem     --endpoints="https://10.140.0.2:2379,https://10.140.0.3:2379,https://10.140.0.4:2379"     endpoint status
+```
