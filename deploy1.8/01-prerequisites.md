@@ -126,3 +126,16 @@ $ sudo cp go/bin/cfssl* /usr/local/bin/
 
 This will download, build, and install all of the utility programs (including `cfssl`, `cfssljson`, and `mkbundle` among others) into the `$GOPATH/bin/` directory.  
 Ref: https://github.com/cloudflare/cfssl#installation  
+
+> If you met this case as the following:
+```sh
+$ go get -u github.com/cloudflare/cfssl/cmd/...                                                                     
+# github.com/cloudflare/cfssl/vendor/github.com/mattn/go-sqlite3
+/opt/gopkg/src/github.com/cloudflare/cfssl/vendor/github.com/mattn/go-sqlite3/backup.go:14:20: fatal error: stdlib.h: No such file or directory
+compilation terminated.
+```
+Please try this cmd to fix the problem(Because there is no Development Libraries and Header Files, I think.)
+```sh
+$ sudo apt-get install libc6-dev
+```
+In my case I solve this problem via this method.
