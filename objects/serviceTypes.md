@@ -1,0 +1,39 @@
+# Service
+
+## Table of Contents
+- [Defining a service](#defining-a-servise)
+- [Virtual IPs and service proxies](#virtual-ips-and-service-proxies)
+- [Publishing services - service types](#publishing-services---service-types)
+    - [Type NodePort](#type-nodeport)
+    - [Type LoadBalancer](#type-loadbalancer)
+
+## Defining a service
+- Service is an abstraction which defines a logical set of Pods and a policy by which to access them - sometimes called a micro-service. 
+- Service 會指定一個 IP 預設是 Cluster IP。
+- Service 在 Spec 內有可以有或沒有 selector
+    - 有 selector 則可以讓 client/user 可以定義一組 objects 。
+    - 差別在於會不會自動建立相關的 Endpoints object
+        - selector 會自動建 endpoints；沒有 selector 不會自動建立，不過可以再用 kind 為 Endpoints 就可以建立。
+
+
+## Virtual IPs and service proxies
+To be continue...  
+
+## Publishing services - service types
+為 Type 的值。分為 4 種 type。
+
+### Type ClusterIP
+ClusterIP：為預設的 ServiceType 。該 service 只能透過這個 service IP 在 cluster 內部 access 。  
+除非使用 Kubernetes Proxy ，要不然根本不能從 cluster 外連到這個服務唷！  
+透過由 google-cloud 的 medium blog 提供的下圖，可以看到如果要從外部訪問這個 service 都是要透過 proxy 才可以 access 到這個 service 。  
+![](https://cdn-images-1.medium.com/max/800/1*I4j4xaaxsuchdvO66V3lAg.png)
+
+### Type NodePort
+
+### Type LoadBalancer
+
+
+Ref:  
+1. https://kubernetes.io/docs/concepts/services-networking/service  
+2. https://k8smeetup.github.io/docs/concepts/services-networking/service/  
+3. https://medium.com/google-cloud/kubernetes-nodeport-vs-loadbalancer-vs-ingress-when-should-i-use-what-922f010849e0  
