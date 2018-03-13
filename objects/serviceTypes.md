@@ -29,6 +29,9 @@ ClusterIP：為預設的 ServiceType 。該 service 只能透過這個 service I
 ![](https://cdn-images-1.medium.com/max/800/1*I4j4xaaxsuchdvO66V3lAg.png)
 
 ### Type NodePort
+NodePort：這個是使用 node 的 IP 和 node 的 port 來讓外埠存取這個 service 。 也就是使用 `<NodeIP>:<NodePort>` 來達到 access 該 service 的目的。  
+如果要指定 port ，可以在 yaml 中加上 nodePort 來指定 port(range 是 30000-32767)。  
+![](https://cdn-images-1.medium.com/max/800/1*CdyUtG-8CfGu2oFC5s0KwA.png)  
 
 ### Type LoadBalancer
 
