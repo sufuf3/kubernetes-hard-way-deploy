@@ -17,13 +17,18 @@
 
 ## 核心原理
 
-## 核心概念
+## Objects
+* [Ingress](objects/ingress.md)
+* [Service]()
+    * Service Type - [NodePort](objects/setviceTypes.md)
+    * Service Type - [LoadBalancer](objects/setviceTypes.md)
+    * Service Type - [ClusterIP](objects/setviceTypes.md)
 
 ## 核心元件
-* [kubectl]()
-* [kube-apiserver]()
-* [kube-scheduler]()
-* [kube-controller-manager]()
+* [kubectl](component/core)
+* [kube-apiserver](component/core)
+* [kube-scheduler](component/core)
+* [kube-controller-manager](component/core)
 
 ## 其他元件
 
