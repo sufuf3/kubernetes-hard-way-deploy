@@ -33,6 +33,7 @@
 ## 其他元件
 
 * [etcd](concept/etcd.md)
+* [Ceph](concept/Ceph.md)
 
 ## 網路
 * [Calico](concept/network/calico.md)
