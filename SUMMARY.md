@@ -18,6 +18,7 @@
 ## 核心原理
 
 ## Objects
+* [resource types list](objects/resource_types_lists.md)
 * [Ingress](objects/ingress.md)
 * [Service]()
     * Service Type - [NodePort](objects/setviceTypes.md)

@@ -20,7 +20,7 @@
 - [ ] limitranges (aka 'limits')
 - [ ] namespaces (aka 'ns')
 - [ ] networkpolicies (aka 'netpol')
-- [ ] nodes (aka 'no')
+- [x] [nodes](nodes.md) (aka 'no')
 - [ ] persistentvolumeclaims (aka 'pvc')
 - [ ] persistentvolumes (aka 'pv')
 - [ ] poddisruptionbudgets (aka 'pdb')
@@ -35,7 +35,7 @@
 - [ ] roles
 - [ ] secrets
 - [ ] serviceaccounts (aka 'sa')
-- [x] services (aka 'svc')  -- Doing
+- [x] [services](serviceTypes.md) (aka 'svc')  -- Doing
 - [ ] statefulsets (aka 'sts')
 - [ ] storageclasses (aka 'sc')
 
@@ -43,3 +43,4 @@
 $ kubectl get -h
 ```
 https://github.com/kubernetes/kubernetes/blob/master/pkg/printers/internalversion/describe.go#L127-L163  
+
