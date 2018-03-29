@@ -6,7 +6,7 @@
 - [ ] clusterrolebindings
 - [ ] clusterroles
 - [ ] componentstatuses (aka 'cs')
-- [ ] configmaps (aka 'cm')
+- [x] [configmaps](configmaps.md) (aka 'cm')
 - [ ] controllerrevisions
 - [ ] cronjobs
 - [ ] customresourcedefinition (aka 'crd')
