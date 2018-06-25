@@ -28,10 +28,18 @@ $ git checkout v1.10.2
 $ make WHAT='test/e2e/e2e.test'
 $ make ginkgo
 $ export KUBERNETES_PROVIDER=local
+$ export KUBECONFIG=~/.kube/config
+$ export KUBERNETES_CONFORMANCE_TEST=y
+$ export KUBECTL_PATH=/usr/local/bin/kubectl
+$ export KUBE_MASTER_IP="10.223.5.200:6443"
+$ export KUBE_MASTER=10.223.5.200
 ```
 ## Run tests
 https://github.com/kubernetes/community/blob/master/contributors/devel/e2e-tests.md#building-kubernetes-and-running-the-tests
-
+- example
+```
+$ GINKGO_PARALLEL=y go run hack/e2e.go -- --provider=skeleton  --build --up --test --test_args="--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[Serial\]" --down
+```
 
 <!--## Try
 - https://github.com/sufuf3/kubernetes-e2e
