@@ -39,6 +39,8 @@ https://github.com/kubernetes/community/blob/master/contributors/devel/e2e-tests
 - example
 ```
 $ GINKGO_PARALLEL=y go run hack/e2e.go -- --provider=skeleton  --build --up --test --test_args="--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[Serial\]" --down
+
+$ GINKGO_PARALLEL=y go run hack/e2e.go -- --provider=skeleton --build --up --test --test_args="--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[Slow\] --delete-namespace-on-failure=false" --down | tee -a tmp0629.log
 ```
 
 <!--## Try
