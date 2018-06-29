@@ -25,6 +25,7 @@ go get -d k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
 # pwd for root /root/go/src/k8s.io/kubernetes
 git checkout v1.10.2
+yum install -y gcc
 make WHAT='test/e2e/e2e.test'
 make ginkgo
 export KUBERNETES_PROVIDER=local
