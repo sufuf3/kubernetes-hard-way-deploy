@@ -2,7 +2,7 @@
 
 # Install Golang
 cd /home/$USER
-wget --quiet https://storage.googleapis.com/golang/go1.10.2.linux-amd64.tar.gz
+curl -LO https://storage.googleapis.com/golang/go1.10.2.linux-amd64.tar.gz
 sudo tar -zxf go1.10.2.linux-amd64.tar.gz -C /usr/local/
 echo 'export GOROOT=/usr/local/go' >>  /home/$USER/.bashrc
 echo 'export GOPATH=$HOME/go' >> /home/$USER/.bashrc
@@ -18,9 +18,12 @@ rm -rf /home/$USER/go1.10.2.linux-amd64.tar.gz
 # 
 cd 
 go get -u github.com/onsi/ginkgo/ginkgo
-go get -u github.com/onsi/gomega/...
+go get -u github.com/onsi/gomega/...|
+# https://github.com/kubernetes/kubernetes#to-start-developing-kubernetes
+go get -u k8s.io/kubernetes
 go get -d k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
+# pwd for root /root/go/src/k8s.io/kubernetes
 git checkout v1.10.2
 make WHAT='test/e2e/e2e.test'
 make ginkgo
