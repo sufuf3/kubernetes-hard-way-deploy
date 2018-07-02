@@ -51,6 +51,19 @@ Ran 155 of 852 Specs in 3435.885 seconds
 FAIL! -- 134 Passed | 21 Failed | 0 Pending | 697 Skipped
 ```-->
 
+## My test
+```sh
+GINKGO_PARALLEL=y go run hack/e2e.go -- --provider=skeleton --build --up --test --test_args="--ginkgo.focus=\[Conformance\] --ginkgo.skip=\[(Serial|It|Flaky|Slow|sig-scheduling|Feature:.*)\]" --down | tee -a tmp0702-01.log
+```
+vim ~/.bashrc
+```sh
+alias stripcolors='sed "s/\x1B\[\([0-9]\{1,2\}\(;[0-9]\{1,2\}\)\?\)\?[mGK]//g"'
+```
+```sh
+source ~/.bashrc
+echo -ne "$(cat tmp0702-01.log)" | stripcolors >> repot.log
+```
+
 ## Ref
 - https://supereagle.github.io/2017/03/09/kubemark/
 - https://jimmysong.io/kubernetes-handbook/develop/testing.html
