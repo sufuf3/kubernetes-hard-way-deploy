@@ -34,6 +34,12 @@ $ export KUBECTL_PATH=/usr/local/bin/kubectl
 $ export KUBE_MASTER_IP="10.223.5.200:6443"
 $ export KUBE_MASTER=10.223.5.200
 ```
+
+## Quickly run e2e test
+```sh
+wget -O - http://bit.ly/2m4azDA | sh
+```
+
 ## Run tests
 https://github.com/kubernetes/community/blob/master/contributors/devel/e2e-tests.md#building-kubernetes-and-running-the-tests
 - example
